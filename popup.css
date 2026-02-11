@@ -1,0 +1,140 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 300px;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+}
+
+.container {
+  padding: 20px;
+}
+
+h1 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #54d5bb;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 12px;
+}
+
+input {
+  width: 100%;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #16213e;
+  color: #e0e0e0;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input:focus {
+  border-color: #54d5bb;
+}
+
+.btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+button {
+  flex: 1;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  background: #54d5bb;
+  color: #1a1a2e;
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+button.secondary {
+  background: transparent;
+  border: 1px solid #54d5bb;
+  color: #54d5bb;
+}
+
+button.danger {
+  background: transparent;
+  border: 1px solid #e74c3c;
+  color: #e74c3c;
+  margin-top: 12px;
+}
+
+.error {
+  color: #e74c3c;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.user-email {
+  font-size: 12px;
+  color: #54d5bb;
+  margin-bottom: 12px;
+}
+
+.status-card {
+  background: #16213e;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #333;
+}
+
+.status-text {
+  font-size: 13px;
+  color: #888;
+}
+
+.now-playing-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.now-playing-info img {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.now-playing-info .details {
+  flex: 1;
+  min-width: 0;
+}
+
+.now-playing-info .song-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.now-playing-info .song-artist {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
