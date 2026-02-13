@@ -280,13 +280,18 @@ By default, this extension uses a shared Supabase database provided by the devel
     *   Copy the contents of `supabase-setup.sql` from this repo.
     *   Paste and run it to create the `now_playing` table and policies.
     *   **Crucial:** Make sure you click "Enable Realtime" for the `now_playing` table if it isn't automatically enabled.
-4.  **Update Configuration**:
-    *   Open `config.js` in the `src` folder.
-    *   Replace `SUPABASE_URL` with your project URL.
-    *   Replace `SUPABASE_KEY` with your project's **anon/public** key.
+4.  **Configure Your Credentials**:
+    ```bash
+    cp config.example.js config.js
+    ```
+    *   Open `config.js` and replace:
+        *   `YOUR_PROJECT_ID` with your Supabase project URL
+        *   `YOUR_SUPABASE_ANON_KEY` with your project's **anon/public** key
+    *   `config.js` is gitignored, so your keys stay local.
 5.  **Load Your Extension**:
     *   Go to `chrome://extensions/`
     *   Enable Developer Mode
     *   Click "Load Unpacked" and select your modified extension folder.
 
 Now you have full control over your data, rate limits, and authentication!
+
