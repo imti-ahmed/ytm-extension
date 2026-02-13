@@ -7,17 +7,26 @@ import { SUPABASE_URL, SUPABASE_KEY } from "./config.js";
 
 // In-memory state
 let currentUser = null;
+let lastSong = null;
+let initPromise = null;
 
 /**
  * Initialize: load stored session
  */
 async function init() {
-    const stored = await chrome.storage.local.get(["session"]);
+    const stored = await chrome.storage.local.get(["session", "lastSong"]);
     if (stored.session) {
         currentUser = stored.session;
         console.log("[YTM Background] Restored session for:", currentUser.email);
     }
+    if (stored.lastSong) {
+        lastSong = stored.lastSong;
+        console.log("[YTM Background] Restored last song:", lastSong.title);
+    }
 }
+
+// Start initialization immediately
+initPromise = init();
 
 /**
  * Sign in with email/password via Supabase Auth
@@ -92,15 +101,107 @@ async function signOut() {
 }
 
 /**
- * Upsert song data to Supabase
+ * Refresh the Supabase session using the stored refresh token.
+ * Returns true if refresh succeeded, false otherwise.
+ */
+async function refreshSession() {
+    if (!currentUser?.refreshToken) {
+        console.warn("[YTM Background] No refresh token available");
+        return false;
+    }
+
+    try {
+        console.log("[YTM Background] Refreshing auth token...");
+        const res = await fetch(
+            `${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    apikey: SUPABASE_KEY,
+                },
+                body: JSON.stringify({
+                    refresh_token: currentUser.refreshToken,
+                }),
+            }
+        );
+
+        if (!res.ok) {
+            console.error("[YTM Background] Token refresh failed:", res.status);
+            return false;
+        }
+
+        const data = await res.json();
+        currentUser = {
+            id: data.user.id,
+            email: data.user.email,
+            accessToken: data.access_token,
+            refreshToken: data.refresh_token,
+        };
+
+        await chrome.storage.local.set({ session: currentUser });
+        console.log("[YTM Background] Token refreshed successfully");
+        return true;
+    } catch (err) {
+        console.error("[YTM Background] Token refresh error:", err);
+        return false;
+    }
+}
+
+/**
+ * Helper: Fetch with retry + automatic token refresh on 401
+ */
+async function fetchWithRetry(url, options, retries = 2, backoff = 1000) {
+    try {
+        const res = await fetch(url, options);
+
+        // If unauthorized, try refreshing the token
+        if (res.status === 401) {
+            const refreshed = await refreshSession();
+            if (refreshed) {
+                // Rebuild headers with new token
+                const newOptions = {
+                    ...options,
+                    headers: {
+                        ...options.headers,
+                        Authorization: `Bearer ${currentUser.accessToken}`,
+                    },
+                };
+                return fetch(url, newOptions);
+            }
+            throw new Error("Auth token expired and refresh failed");
+        }
+
+        if (!res.ok && res.status >= 500) {
+            throw new Error(`Server error: ${res.status}`);
+        }
+        return res;
+    } catch (err) {
+        if (retries > 0) {
+            console.warn(
+                `[YTM Background] Fetch failed, retrying in ${backoff}ms...`,
+                err.message
+            );
+            await new Promise((r) => setTimeout(r, backoff));
+            return fetchWithRetry(url, options, retries - 1, backoff * 2);
+        }
+        throw err;
+    }
+}
+
+/**
+ * Upsert song data to Supabase.
+ * On auth failure, refreshes the token and retries once.
  */
 async function upsertNowPlaying(songData) {
+    await initPromise; // Wait for session to load
+
     if (!currentUser) {
         console.warn("[YTM Background] Not signed in, skipping update");
         return;
     }
 
-    const payload = {
+    const buildPayload = () => ({
         user_id: currentUser.id,
         title: songData.title,
         artist: songData.artist,
@@ -108,53 +209,78 @@ async function upsertNowPlaying(songData) {
         album_art: songData.albumArt || "",
         duration: songData.duration || "",
         is_playing: songData.isPlaying,
+        song_url: songData.songUrl || "",
+        progress_ms: songData.progressMs || 0,
+        duration_ms: songData.durationMs || 0,
         updated_at: new Date().toISOString(),
-    };
+    });
 
-    // Upsert: if row exists for this user, update it; otherwise insert
-    const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/now_playing?user_id=eq.${currentUser.id}`,
-        {
-            method: "GET",
-            headers: {
-                apikey: SUPABASE_KEY,
-                Authorization: `Bearer ${currentUser.accessToken}`,
-            },
-        }
-    );
+    const buildHeaders = (extra = {}) => ({
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${currentUser.accessToken}`,
+        ...extra,
+    });
 
-    const existing = await res.json();
+    const doUpsert = async () => {
+        const payload = buildPayload();
 
-    if (existing.length > 0) {
-        // UPDATE
-        await fetch(
+        // Check if row exists
+        const getRes = await fetchWithRetry(
             `${SUPABASE_URL}/rest/v1/now_playing?user_id=eq.${currentUser.id}`,
             {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    apikey: SUPABASE_KEY,
-                    Authorization: `Bearer ${currentUser.accessToken}`,
-                    Prefer: "return=minimal",
-                },
-                body: JSON.stringify(payload),
+                method: "GET",
+                headers: buildHeaders(),
             }
         );
-    } else {
-        // INSERT
-        await fetch(`${SUPABASE_URL}/rest/v1/now_playing`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                apikey: SUPABASE_KEY,
-                Authorization: `Bearer ${currentUser.accessToken}`,
-                Prefer: "return=minimal",
-            },
-            body: JSON.stringify(payload),
-        });
-    }
 
-    console.log("[YTM Background] Upserted:", payload.title, "-", payload.artist);
+        const existing = await getRes.json();
+
+        if (existing.length > 0) {
+            // UPDATE
+            await fetchWithRetry(
+                `${SUPABASE_URL}/rest/v1/now_playing?user_id=eq.${currentUser.id}`,
+                {
+                    method: "PATCH",
+                    headers: buildHeaders({
+                        "Content-Type": "application/json",
+                        Prefer: "return=representation",
+                    }),
+                    body: JSON.stringify(payload),
+                }
+            );
+        } else {
+            // INSERT
+            await fetchWithRetry(`${SUPABASE_URL}/rest/v1/now_playing`, {
+                method: "POST",
+                headers: buildHeaders({
+                    "Content-Type": "application/json",
+                    Prefer: "return=representation",
+                }),
+                body: JSON.stringify(payload),
+            });
+        }
+
+        console.log(
+            "[YTM Background] Upserted:",
+            payload.title,
+            "-",
+            payload.artist
+        );
+    };
+
+    try {
+        await doUpsert();
+    } catch (err) {
+        // If the first attempt failed entirely (e.g., "Failed to fetch" from expired token),
+        // try refreshing the token and retry once
+        console.warn("[YTM Background] Upsert failed, attempting token refresh...", err.message);
+        const refreshed = await refreshSession();
+        if (refreshed) {
+            await doUpsert(); // Retry with fresh token
+        } else {
+            throw err; // Give up — will be caught by onMessage handler
+        }
+    }
 }
 
 /**
@@ -162,7 +288,30 @@ async function upsertNowPlaying(songData) {
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === "SONG_UPDATE") {
-        upsertNowPlaying(message.payload);
+        lastSong = message.payload;
+        chrome.storage.local.set({ lastSong });
+
+        // Handle async upsert and send response when done
+        upsertNowPlaying(message.payload)
+            .then(() => sendResponse({ success: true }))
+            .catch((err) => {
+                console.error("[YTM Background] Upsert failed:", err);
+                sendResponse({ success: false, error: err.message });
+            });
+
+        return true; // Keep channel open for async response
+    }
+
+    if (message.type === "GET_SONG") {
+        if (lastSong) {
+            sendResponse({ song: lastSong });
+        } else {
+            chrome.storage.local.get(["lastSong"]).then((stored) => {
+                lastSong = stored.lastSong || null;
+                sendResponse({ song: lastSong });
+            });
+            return true; // keep channel open for async
+        }
         return;
     }
 
@@ -191,5 +340,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 });
 
-// Initialize on load
-init();

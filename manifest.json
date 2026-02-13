@@ -9,7 +9,7 @@
     ],
     "host_permissions": [
         "https://music.youtube.com/*",
-        "https://*.supabase.co/*"
+        "https://uczcbonklkmgzdtqeulx.supabase.co/*"
     ],
     "background": {
         "service_worker": "background.js",

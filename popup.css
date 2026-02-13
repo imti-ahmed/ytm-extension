@@ -7,8 +7,8 @@
 body {
   width: 300px;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background: #1a1a2e;
-  color: #e0e0e0;
+  background: #1d1d20;
+  color: #cacaca;
 }
 
 .container {
@@ -23,7 +23,7 @@ h1 {
 
 .subtitle {
   font-size: 12px;
-  color: #888;
+  color: #8892b0;
   margin-bottom: 12px;
 }
 
@@ -31,10 +31,10 @@ input {
   width: 100%;
   padding: 8px 12px;
   margin-bottom: 8px;
-  border: 1px solid #333;
+  border: 1px solid #3a3a3d;
   border-radius: 6px;
-  background: #16213e;
-  color: #e0e0e0;
+  background: #2b2b2e;
+  color: #cacaca;
   font-size: 13px;
   outline: none;
   transition: border-color 0.2s;
@@ -60,7 +60,7 @@ button {
   cursor: pointer;
   transition: opacity 0.2s;
   background: #54d5bb;
-  color: #1a1a2e;
+  color: #1d1d20;
 }
 
 button:hover {
@@ -89,19 +89,65 @@ button.danger {
 .user-email {
   font-size: 12px;
   color: #54d5bb;
+  margin-bottom: 4px;
+}
+
+.id-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-bottom: 12px;
 }
 
+.id-label {
+  font-size: 11px;
+  color: #8892b0;
+}
+
+.id-value {
+  font-size: 10px;
+  color: #8892b0;
+  background: #2b2b2e;
+  padding: 2px 6px;
+  border-radius: 4px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copy-btn {
+  flex: none;
+  padding: 2px 6px;
+  font-size: 11px;
+  background: transparent;
+  border: 1px solid #3a3a3d;
+  color: #8892b0;
+  cursor: pointer;
+  border-radius: 4px;
+  min-width: auto;
+}
+
+.copy-btn:hover {
+  border-color: #54d5bb;
+  color: #54d5bb;
+}
+
+.copy-btn.copied {
+  border-color: #54d5bb;
+  color: #54d5bb;
+}
+
 .status-card {
-  background: #16213e;
+  background: #2b2b2e;
   border-radius: 8px;
   padding: 12px;
-  border: 1px solid #333;
+  border: 1px solid #3a3a3d;
 }
 
 .status-text {
   font-size: 13px;
-  color: #888;
+  color: #8892b0;
 }
 
 .now-playing-info {
@@ -133,7 +179,7 @@ button.danger {
 
 .now-playing-info .song-artist {
   font-size: 11px;
-  color: #888;
+  color: #8892b0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

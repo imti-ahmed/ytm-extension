@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YTM Now Playing</title>
   <link rel="stylesheet" href="popup.css">
 </head>
+
 <body>
   <div class="container">
     <h1>🎵 YTM Now Playing</h1>
@@ -25,6 +27,17 @@
     <!-- Status Section (shown when logged in) -->
     <div id="status-section" style="display: none;">
       <p class="user-email" id="user-email"></p>
+      <div class="id-row" id="id-row" style="display: none;">
+        <span class="id-label">Your ID:</span>
+        <code class="id-value" id="user-id-display"></code>
+        <button class="copy-btn" id="copy-id-btn" title="Copy ID">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </button>
+      </div>
       <div class="status-card" id="status-card">
         <p class="status-text">Waiting for YouTube Music...</p>
       </div>
@@ -34,4 +47,5 @@
 
   <script src="popup.js"></script>
 </body>
+
 </html>
