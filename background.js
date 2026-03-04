@@ -221,66 +221,24 @@ async function upsertNowPlaying(songData) {
         ...extra,
     });
 
-    const doUpsert = async () => {
-        const payload = buildPayload();
+    const payload = buildPayload();
 
-        // Check if row exists
-        const getRes = await fetchWithRetry(
-            `${SUPABASE_URL}/rest/v1/now_playing?user_id=eq.${currentUser.id}`,
-            {
-                method: "GET",
-                headers: buildHeaders(),
-            }
-        );
+    // Single upsert — if user_id exists, update; otherwise insert
+    await fetchWithRetry(`${SUPABASE_URL}/rest/v1/now_playing?on_conflict=user_id`, {
+        method: "POST",
+        headers: buildHeaders({
+            "Content-Type": "application/json",
+            Prefer: "resolution=merge-duplicates,return=representation",
+        }),
+        body: JSON.stringify(payload),
+    });
 
-        const existing = await getRes.json();
-
-        if (existing.length > 0) {
-            // UPDATE
-            await fetchWithRetry(
-                `${SUPABASE_URL}/rest/v1/now_playing?user_id=eq.${currentUser.id}`,
-                {
-                    method: "PATCH",
-                    headers: buildHeaders({
-                        "Content-Type": "application/json",
-                        Prefer: "return=representation",
-                    }),
-                    body: JSON.stringify(payload),
-                }
-            );
-        } else {
-            // INSERT
-            await fetchWithRetry(`${SUPABASE_URL}/rest/v1/now_playing`, {
-                method: "POST",
-                headers: buildHeaders({
-                    "Content-Type": "application/json",
-                    Prefer: "return=representation",
-                }),
-                body: JSON.stringify(payload),
-            });
-        }
-
-        console.log(
-            "[YTM Background] Upserted:",
-            payload.title,
-            "-",
-            payload.artist
-        );
-    };
-
-    try {
-        await doUpsert();
-    } catch (err) {
-        // If the first attempt failed entirely (e.g., "Failed to fetch" from expired token),
-        // try refreshing the token and retry once
-        console.warn("[YTM Background] Upsert failed, attempting token refresh...", err.message);
-        const refreshed = await refreshSession();
-        if (refreshed) {
-            await doUpsert(); // Retry with fresh token
-        } else {
-            throw err; // Give up — will be caught by onMessage handler
-        }
-    }
+    console.log(
+        "[YTM Background] Upserted:",
+        payload.title,
+        "-",
+        payload.artist
+    );
 }
 
 /**
