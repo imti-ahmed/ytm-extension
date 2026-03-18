@@ -5,6 +5,9 @@
 
 console.log("[YTM Now Playing] Content script loaded on:", window.location.href);
 
+// inject-video-id.js runs in MAIN world via manifest and stores
+// the current video ID in a hidden DOM element for us to read.
+
 const SELECTORS = {
     playerBar: "ytmusic-player-bar",
     title: "ytmusic-player-bar .title",
@@ -70,6 +73,15 @@ function extractSongData() {
     const elapsed = timeParts[0] || "";
     const duration = timeParts[1] || "";
 
+    // Build the direct song URL from the video ID
+    // so we read the video ID from our injected page-context script
+    let songUrl = window.location.href;
+
+    const videoIdHolder = document.getElementById("__ytm_now_playing_video_id");
+    if (videoIdHolder && videoIdHolder.dataset.videoId) {
+        songUrl = `https://music.youtube.com/watch?v=${videoIdHolder.dataset.videoId}`;
+    }
+
     const data = {
         title: title.textContent.trim(),
         artist,
@@ -77,7 +89,7 @@ function extractSongData() {
         albumArt: albumArt?.src || "",
         duration,
         isPlaying,
-        songUrl: window.location.href,
+        songUrl,
         progressMs: timeToMs(elapsed),
         durationMs: timeToMs(duration),
     };
