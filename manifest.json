@@ -9,11 +9,10 @@
     ],
     "host_permissions": [
         "https://music.youtube.com/*",
-        "https://uczcbonklkmgzdtqeulx.supabase.co/*"
+        "<all_urls>"
     ],
     "background": {
-        "service_worker": "background.js",
-        "type": "module"
+        "service_worker": "background.js"
     },
     "browser_specific_settings": {
         "gecko": {

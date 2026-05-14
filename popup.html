@@ -10,38 +10,9 @@
 
 <body>
   <div class="container">
-    <h1>🎵 YTM Now Playing</h1>
-
-    <!-- Auth Section -->
-    <div id="auth-section">
-      <p class="subtitle">Sign in to start tracking</p>
-      <input type="email" id="email" placeholder="Email" />
-      <input type="password" id="password" placeholder="Password" />
-      <div class="btn-row">
-        <button id="sign-in-btn">Sign In</button>
-        <button id="sign-up-btn" class="secondary">Sign Up</button>
-      </div>
-      <p id="auth-error" class="error"></p>
-    </div>
-
-    <!-- Status Section (shown when logged in) -->
-    <div id="status-section" style="display: none;">
-      <p class="user-email" id="user-email"></p>
-      <div class="id-row" id="id-row" style="display: none;">
-        <span class="id-label">Your ID:</span>
-        <code class="id-value" id="user-id-display"></code>
-        <button class="copy-btn" id="copy-id-btn" title="Copy ID">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-        </button>
-      </div>
-      <div class="status-card" id="status-card">
-        <p class="status-text">Waiting for YouTube Music...</p>
-      </div>
-      <button id="sign-out-btn" class="danger">Sign Out</button>
+    <h1>YTM Now Playing</h1>
+    <div class="status-card" id="status-card">
+      <p class="status-text">Waiting for YouTube Music...</p>
     </div>
   </div>
 
